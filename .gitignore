@@ -1,0 +1,18 @@
+# directories
+.vs/
+build/
+
+# extensions
+*.exe
+*.lib
+*.dll
+*.idb
+*.so
+*.sdf
+*.opensdf
+*.user
+*.filters
+
+# exceptions
+!/vendor/**/*
+
