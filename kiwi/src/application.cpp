@@ -1,6 +1,7 @@
 // application.cpp
 
 #include "application.hpp"
+
 #include <GLFW/glfw3.h>
 
 #pragma warning(push)
@@ -74,9 +75,23 @@ bool application_t::setTextures()
     success &= m_textureSaturn.create_from_file("assets/8k_saturn.jpg");
     success &= m_textureUranus.create_from_file("assets/2k_uranus.jpg");
     success &= m_textureNeptune.create_from_file("assets/2k_neptune.jpg");
+    putTexturesInVector();
     return success;
 }
 
+void application_t::putTexturesInVector()
+{
+    m_textures.push_back(m_textureSun);
+    m_textures.push_back(m_textureMercury);
+    m_textures.push_back(m_textureVenus);
+    m_textures.push_back(m_textureEarth);
+    m_textures.push_back(m_textureMoon);
+    m_textures.push_back(m_textureMars);
+    m_textures.push_back(m_textureJupiter);
+    m_textures.push_back(m_textureSaturn);
+    m_textures.push_back(m_textureUranus);
+    m_textures.push_back(m_textureNeptune);
+}
 
 void application_t::on_shutdown()
 {
@@ -86,12 +101,7 @@ bool application_t::on_update(const timespan_t &deltatime,
                               const timespan_t &apptime)
 {
    constexpr float cube_origin_z = -12.0f;
-   constexpr float cube_span_z = 10.0f;
-   constexpr float cube_speed_factor = 2.0f;
-
-   m_position.z = cube_origin_z + std::cosf(apptime.elapsed_seconds() * cube_speed_factor) * cube_span_z;
-   m_rotation.x += deltatime.elapsed_seconds();
-   m_rotation.y += deltatime.elapsed_seconds();
+   m_position.z = cube_origin_z;
    m_rotation.z += deltatime.elapsed_seconds();
 
    m_world = glm::translate(glm::mat4(1.0f), m_position) *
@@ -114,18 +124,26 @@ void application_t::on_render(const viewport_t &viewport)
    // note: done once
    m_renderer.clear(color_t{ 0.1f, 0.2f, 0.3f, 1.0f });
    m_renderer.set_viewport(viewport);
-
+   
    // note: done for each object we want to render
-   m_renderer.set_shader_program(m_program);
-   m_renderer.set_uniform("u_projection", projection);
-   m_renderer.set_uniform("u_world", m_world);
-   m_renderer.set_texture(m_textureSun);
-   m_renderer.set_sampler_state(m_sampler);
-   m_renderer.set_blend_state(m_blend_state);
-   m_renderer.set_depth_stencil_state(m_depth_stencil_state);
-   m_renderer.set_rasterizer_state(m_rasterizer_state);
-   m_renderer.set_vertex_buffer_and_layout(m_cube, m_layout);
-   m_renderer.draw(topology_t::triangle_list, 0, m_cube_primitive_count);
+   for (unsigned int i = 0; i < m_textures.size(); i++) {
+       renderObject(projection, i);
+   }
+   
+}
+
+void application_t::renderObject(glm::mat4& projection, unsigned int i)
+{
+    m_renderer.set_shader_program(m_program);
+    m_renderer.set_uniform("u_projection", projection);
+    m_renderer.set_uniform("u_world", m_world);
+    m_renderer.set_texture(m_textures.at(i));
+    m_renderer.set_sampler_state(m_sampler);
+    m_renderer.set_blend_state(m_blend_state);
+    m_renderer.set_depth_stencil_state(m_depth_stencil_state);
+    m_renderer.set_rasterizer_state(m_rasterizer_state);
+    m_renderer.set_vertex_buffer_and_layout(m_objects.at(i), m_layout);
+    m_renderer.draw(topology_t::triangle_list, 0, m_cube_primitive_count);
 }
 
 void application_t::on_event(const mouse_moved_t &event)
@@ -262,11 +280,6 @@ bool application_t::make_cube(vertex_buffer_t &buffer, vertex_layout_t &layout, 
    if (!buffer.create(sizeof(vertices), vertices)) {
       return false;
    }
-
+   m_objects.push_back(buffer);
    return true;
-}
-
-bool application_t::make_sphere(vertex_buffer_t& buffer, vertex_layout_t& layout, int& primitive_count, float radius)
-{
-    return false;
 }
